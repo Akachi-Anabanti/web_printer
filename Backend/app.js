@@ -6,16 +6,13 @@ const { printer } = require('node-printer');
 const app = express();
 const upload = multer({ dest: 'uploads/' });
 
-const corsOptions = {
-  origin: "https://effective-acorn-pv44jrwv9jph6vjx-5173.app.github.dev/", // Allow only this origin
-  methods: ['GET', 'POST'], // Allow only GET and POST requests
-  allowedHeaders: ['Content-Type', 'Authorization'], // Allow these headers
-  optionsSuccessStatus: 200 // For legacy browser support
-};
 
+app.use(cors({
+  origin: 'http://localhost:5173', // Update this with your frontend URL
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  allowedHeaders: ['Content-Type'],
+}));
 
-
-app.use(cors(corsOptions));
 app.use(express.json());
 
 app.get("/", (req, res) => {
