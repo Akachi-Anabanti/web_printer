@@ -15,19 +15,12 @@ const FileUploadPrintQueue = () => {
     setQueue((prevQueue) => [...prevQueue, ...files]);
   }, []);
 
-  async function testConnection() {
-    const response = await fetch("https://effective-acorn-pv44jrwv9jph6vjx-3001.app.github.dev/");
-    console.log(response);
-
-  }
-
   const uploadAndPrint = async (file) => {
     const formData = new FormData();
     formData.append('file', file);
 
     try {
-      await testConnection();
-      const response = await fetch('https://effective-acorn-pv44jrwv9jph6vjx-3001.app.github.dev/upload-and-print', {
+      const response = await fetch('/api/upload-and-print', {
         method: 'POST',
         body: formData,
       });
@@ -48,7 +41,7 @@ const FileUploadPrintQueue = () => {
   const checkPrintStatus = useCallback(async () => {
     if (printJobId) {
       try {
-        const response = await fetch(`https://effective-acorn-pv44jrwv9jph6vjx-3001.app.github.dev/print-status/${printJobId}`);
+        const response = await fetch(`/api/print-status/${printJobId}`);
         const result = await response.json();
         setPrintStatus(result.status);
 
@@ -65,6 +58,14 @@ const FileUploadPrintQueue = () => {
     const statusInterval = setInterval(checkPrintStatus, 5000);
     return () => clearInterval(statusInterval);
   }, [checkPrintStatus]);
+
+  useEffect(() => {
+    fetch("http://localhost:3001/")
+    .then(response => response.json())
+    .then(data => setServerStatus(data));
+
+    alert(serverStatus);
+  }, [])
 
   const processNextFile = useCallback(async () => {
     if (queue.length > 0 && !currentFile) {

@@ -1,0 +1,16 @@
+{
+    "name": "Express React App",
+    "dockerComposeFile": "docker-compose.yml",
+    "service": "app",
+    "workspaceFolder": "/workspace",
+    "forwardPorts": [5173, 3001],
+    "postCreateCommand": "cd Backend && npm install && cd ../Frontend && npm install",
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "dbaeumer.vscode-eslint",
+                "esbenp.prettier-vscode"
+            ]
+        }
+    }
+  }
