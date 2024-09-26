@@ -15,10 +15,10 @@ Vagrant.configure("2") do |config|
       sudo apt-get upgrade -y
   
       # Install Java
-      sudo apt-get install -y openjdk-11-jdk
+      sudo apt-get install -y openjdk-21-jdk
   
       # Install Node.js and npm
-      curl -sL https://deb.nodesource.com/setup_14.x | sudo -E bash -
+      curl -sL https://deb.nodesource.com/setup_20.x | sudo -E bash -
       sudo apt-get install -y nodejs
   
       # Install Maven
@@ -27,12 +27,6 @@ Vagrant.configure("2") do |config|
       # Install Git
       sudo apt-get install -y git
   
-      # Install and configure MySQL
-      sudo apt-get install -y mysql-server
-      sudo mysql -e "CREATE DATABASE printer_management;"
-      sudo mysql -e "CREATE USER 'printapp'@'localhost' IDENTIFIED BY 'password';"
-      sudo mysql -e "GRANT ALL PRIVILEGES ON printer_management.* TO 'printapp'@'localhost';"
-  
       # Install CUPS for printer management
       sudo apt-get install -y cups
   
@@ -40,18 +34,18 @@ Vagrant.configure("2") do |config|
       git clone https://github.com/yourusername/printer-management-app.git /home/vagrant/printer-management-app
   
       # Set up the backend
-      cd /home/vagrant/printer-management-app/backend
+      cd /home/vagrant/printer-management-app/printer-management
       mvn clean install
   
       # Set up the frontend
-      cd /home/vagrant/printer-management-app/frontend
+      cd /home/vagrant/printer-management-app/printer-management-frontend
       npm install
   
       # Add a startup script
       echo '#!/bin/bash
-      cd /home/vagrant/printer-management-app/backend
+      cd /home/vagrant/printer-management-app/printer-management
       nohup mvn spring-boot:run > /dev/null 2>&1 &
-      cd /home/vagrant/printer-management-app/frontend
+      cd /home/vagrant/printer-management-app/printer-management-frontend
       nohup npm start > /dev/null 2>&1 &
       ' > /home/vagrant/start_app.sh
   
