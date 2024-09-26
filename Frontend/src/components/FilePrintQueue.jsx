@@ -1,12 +1,12 @@
-import React, { useState, useCallback, useEffect } from 'react';
-import { Upload, FileText, Printer } from 'lucide-react';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { useState, useCallback, useEffect } from "react";
+import { Upload, FileText, Printer } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const FileUploadPrintQueue = () => {
   const [queue, setQueue] = useState([]);
   const [currentFile, setCurrentFile] = useState(null);
   const [progress, setProgress] = useState(0);
-  const [printStatus, setPrintStatus] = useState('');
+  const [printStatus, setPrintStatus] = useState("");
   const [printJobId, setPrintJobId] = useState(null);
   const [serverStatus, setServerStatus] = useState("Offline");
 
@@ -17,39 +17,41 @@ const FileUploadPrintQueue = () => {
 
   const uploadAndPrint = async (file) => {
     const formData = new FormData();
-    formData.append('file', file);
+    formData.append("file", file);
 
     try {
-      const response = await fetch('/api/upload-and-print', {
-        method: 'POST',
+      const response = await fetch("http://localhost:3001/upload-and-print", {
+        method: "POST",
         body: formData,
       });
 
       if (!response.ok) {
-        throw new Error('Upload failed');
+        throw new Error("Upload failed");
       }
 
       const result = await response.json();
       setPrintJobId(result.jobId);
-      setPrintStatus('Printing...');
+      setPrintStatus("Printing...");
     } catch (error) {
-      console.error('Error:', error);
-      setPrintStatus('Error occurred while printing');
+      console.error("Error:", error);
+      setPrintStatus("Error occurred while printing");
     }
   };
 
   const checkPrintStatus = useCallback(async () => {
     if (printJobId) {
       try {
-        const response = await fetch(`/api/print-status/${printJobId}`);
+        const response = await fetch(
+          `http://localhost:3001/print-status/${printJobId}`
+        );
         const result = await response.json();
         setPrintStatus(result.status);
 
-        if (result.status === 'completed') {
+        if (result.status === "completed") {
           setPrintJobId(null);
         }
       } catch (error) {
-        console.error('Error checking print status:', error);
+        console.error("Error checking print status:", error);
       }
     }
   }, [printJobId]);
@@ -61,11 +63,9 @@ const FileUploadPrintQueue = () => {
 
   useEffect(() => {
     fetch("http://localhost:3001/")
-    .then(response => response.json())
-    .then(data => setServerStatus(data));
-
-    alert(serverStatus);
-  }, [])
+      .then((response) => response.json())
+      .then((data) => setServerStatus(data.message));
+  }, [serverStatus]);
 
   const processNextFile = useCallback(async () => {
     if (queue.length > 0 && !currentFile) {
@@ -83,7 +83,7 @@ const FileUploadPrintQueue = () => {
         }
       }, 2000);
     }
-  }, [queue]);
+  }, [queue, currentFile]);
 
   useEffect(() => {
     processNextFile();
@@ -92,27 +92,40 @@ const FileUploadPrintQueue = () => {
   return (
     <div className="max-w-md mx-auto mt-10 p-6 bg-white rounded-lg shadow-xl">
       <h1 className="text-2xl font-bold mb-4">File Upload and Print Queue</h1>
+      <h3 className="bg-secondary">{serverStatus}</h3>
       <div className="mb-4">
-        <label htmlFor="file-upload" className="cursor-pointer bg-blue-500 text-white py-2 px-4 rounded inline-flex items-center">
+        <label
+          htmlFor="file-upload"
+          className="cursor-pointer bg-blue-500 text-white py-2 px-4 rounded inline-flex items-center"
+        >
           <Upload className="mr-2" />
           <span>Upload Files</span>
         </label>
-        <input id="file-upload" type="file" multiple onChange={handleFileUpload} className="hidden" />
+        <input
+          id="file-upload"
+          type="file"
+          multiple
+          onChange={handleFileUpload}
+          className="hidden"
+        />
       </div>
       {queue.length > 0 && (
         <Alert>
           <FileText className="h-4 w-4" />
           <AlertTitle>Queue Status</AlertTitle>
-          <AlertDescription>
-            {queue.length} file(s) in queue
-          </AlertDescription>
+          <AlertDescription>{queue.length} file(s) in queue</AlertDescription>
         </Alert>
       )}
       {currentFile && (
         <div className="mt-4">
-          <h2 className="text-lg font-semibold mb-2">Processing: {currentFile.name}</h2>
+          <h2 className="text-lg font-semibold mb-2">
+            Processing: {currentFile.name}
+          </h2>
           <div className="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
-            <div className="bg-blue-600 h-2.5 rounded-full" style={{ width: `${progress}%` }}></div>
+            <div
+              className="bg-blue-600 h-2.5 rounded-full"
+              style={{ width: `${progress}%` }}
+            ></div>
           </div>
         </div>
       )}
