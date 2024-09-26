@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = 'https://effective-acorn-pv44jrwv9jph6vjx-5000.app.github.dev/api/print'; //'http://localhost:5000/api/print';
+const API_URL = 'http://localhost:5000/api/print';
 
 export const uploadFile = async (file) => {
   const formData = new FormData();
