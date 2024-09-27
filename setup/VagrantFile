@@ -13,16 +13,12 @@ Vagrant.configure("2") do |config|
       # Update and upgrade the system
       sudo apt-get update
       sudo apt-get upgrade -y
-  
-      # Install Java
-      sudo apt-get install -y openjdk-21-jdk
-  
-      # Install Node.js and npm
-      curl -sL https://deb.nodesource.com/setup_20.x | sudo -E bash -
-      sudo apt-get install -y nodejs
-  
-      # Install Maven
-      sudo apt-get install -y maven
+
+      # Install python3-pip
+       sudo apt install python3-pip -y
+
+     # Install python ansible
+      pip install ansible
   
       # Install Git
       sudo apt-get install -y git
@@ -33,24 +29,8 @@ Vagrant.configure("2") do |config|
       # Clone your application repository (replace with your actual repo URL)
       git clone https://github.com/yourusername/printer-management-app.git /home/vagrant/printer-management-app
   
-      # Set up the backend
+      # Use Ansible to setup the enivironment and application
       cd /home/vagrant/printer-management-app/printer-management
-      mvn clean install
-  
-      # Set up the frontend
-      cd /home/vagrant/printer-management-app/printer-management-frontend
-      npm install
-  
-      # Add a startup script
-      echo '#!/bin/bash
-      cd /home/vagrant/printer-management-app/printer-management
-      nohup mvn spring-boot:run > /dev/null 2>&1 &
-      cd /home/vagrant/printer-management-app/printer-management-frontend
-      nohup npm start > /dev/null 2>&1 &
-      ' > /home/vagrant/start_app.sh
-  
-      chmod +x /home/vagrant/start_app.sh
-  
-      echo "To start the application, SSH into the VM and run: ./start_app.sh"
+        ansible-playbook -i inventory SetupPlaybook.yml
     SHELL
   end
