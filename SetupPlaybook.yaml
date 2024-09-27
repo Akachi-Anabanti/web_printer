@@ -16,6 +16,7 @@
           - maven
           - git
           - cups
+          - cups-bsd
           - nginx
         state: present
       when: ansible_os_family == "Debian"
