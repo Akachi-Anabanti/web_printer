@@ -39,11 +39,11 @@
         name: cups
         state: present
 
-    - name: Clone application repository
-      git:
-        repo: https://github.com/Akachi-Anabanti/web_printer.git
-        dest: /home/vagrant/web_printer
-        version: main
+    # - name: Clone application repository
+    #   git:
+    #     repo: https://github.com/Akachi-Anabanti/web_printer.git
+    #     dest: /home/vagrant/web_printer
+    #     version: main
 
     - name: Build the backend
       command: mvn clean install
