@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = 'http://localhost:5000/api/print';
+const API_URL = '/api/print';
 
 export const uploadFile = async (file) => {
   const formData = new FormData();
