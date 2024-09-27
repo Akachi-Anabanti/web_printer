@@ -1,0 +1,86 @@
+---
+- name: Deploy Application on Local Machine
+  hosts: localhost  # Changed from 'local' to 'localhost'
+  become: yes  # Use sudo if necessary
+  tasks:
+    - name: Update and upgrade the system
+      apt:
+        update_cache: yes
+        upgrade: dist
+      when: ansible_os_family == "Debian"  # Add conditional for Debian-based systems
+
+    - name: Install required packages
+      apt:
+        name:
+          - openjdk-21-jdk
+          - maven
+          - git
+          - cups
+          - nginx
+        state: present
+      when: ansible_os_family == "Debian"
+
+    - name: Add NodeSource repository
+      get_url:
+        url: https://deb.nodesource.com/setup_20.x
+        dest: /tmp/nodesource_setup.sh
+        mode: '0755'
+      when: ansible_os_family == "Debian"
+
+    - name: Run NodeSource setup script
+      command: /tmp/nodesource_setup.sh
+      args:
+        creates: /etc/apt/sources.list.d/nodesource.list
+      when: ansible_os_family == "Debian"
+
+    - name: Install Node.js
+      apt:
+        name: nodejs
+        state: present
+        update_cache: yes
+      when: ansible_os_family == "Debian"
+
+    - name: Clone application repository
+      git:
+        repo: https://github.com/Akachi-Anabanti/web_printer.git
+        dest: /home/vagrant/web_printer
+        version: main
+      become_user: vagrant
+
+    - name: Build the backend
+      command: mvn clean install
+      args:
+        chdir: /home/vagrant/web_printer/printer-management
+      become_user: vagrant
+
+    - name: Build the frontend
+      command: npm install && npm run build
+      args:
+        chdir: /home/vagrant/web_printer/printer-management-frontend
+      become_user: vagrant
+
+    - name: Configure Nginx
+      template:
+        src: nginx_config.j2  # Create this template file
+        dest: /etc/nginx/sites-available/myapp
+      notify: Restart Nginx
+
+    - name: Enable Nginx configuration
+      file:
+        src: /etc/nginx/sites-available/myapp
+        dest: /etc/nginx/sites-enabled/myapp
+        state: link
+      notify: Restart Nginx
+
+    - name: Create startup script
+      template:
+        src: start_app.sh.j2  # Create this template file
+        dest: /home/vagrant/start_app.sh
+        mode: '0755'
+      become_user: vagrant
+
+  handlers:
+    - name: Restart Nginx
+      systemd:
+        name: nginx
+        state: restarted
