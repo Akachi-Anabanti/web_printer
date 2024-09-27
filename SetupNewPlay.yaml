@@ -59,10 +59,26 @@
         chdir: /home/vagrant/web_printer/printer-management-frontend
       become_user: vagrant
 
-    - name: Configure Nginx
-      template:
-        src: nginx_config.j2  # Create this template file
-        dest: /etc/nginx/sites-available/myapp
+ - name: Configure Nginx
+  copy:
+      dest: /etc/nginx/sites-available/myapp
+      content: |
+          server {
+              listen 80;
+              server_name localhost;
+              location / {
+                  root /home/vagrant/web_printer/printer-management-frontend/build;
+                  index index.html index.htm;
+                  try_files $uri $uri/ /index.html;
+              }
+              location /api {
+                  proxy_pass http://localhost:8080;  # Adjust this if needed
+                  proxy_set_header Host $host;
+                  proxy_set_header X-Real-IP $remote_addr;
+                  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                  proxy_set_header X-Forwarded-Proto $scheme;
+              }
+          }
       notify: Restart Nginx
 
     - name: Enable Nginx configuration
@@ -72,12 +88,16 @@
         state: link
       notify: Restart Nginx
 
-    - name: Create startup script
-      template:
-        src: start_app.sh.j2  # Create this template file
+  - name: Create startup script
+      copy:
         dest: /home/vagrant/start_app.sh
-        mode: '0755'
-      become_user: vagrant
+        content: |
+          #!/bin/bash
+          cd /home/vagrant/web_printer/printer-management
+          nohup mvn spring-boot:run > /dev/null 2>&1 &
+          cd /home/vagrant/web_printer/printer-management-frontend
+          nohup npm start > /dev/null 2>&1 &
+      mode: '0755'
 
   handlers:
     - name: Restart Nginx
