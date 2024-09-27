@@ -1,0 +1,109 @@
+---
+- name: Deploy Application on Local Machine
+  hosts: local  # Use the local inventory group
+  become: yes  # Use sudo if necessary
+
+  tasks:
+    - name: Update and upgrade the system
+      apt:
+        update_cache: yes
+        upgrade: dist
+
+    - name: Install Java
+      apt:
+        name: openjdk-21-jdk
+        state: present
+
+    - name: Install Node.js and npm
+      apt_repository:
+        repo: "deb https://deb.nodesource.com/node_20.x $(lsb_release -cs) main"
+        state: present
+
+    - name: Install Node.js
+      apt:
+        name: nodejs
+        state: present
+
+    - name: Install Maven
+      apt:
+        name: maven
+        state: present
+
+    - name: Install Git
+      apt:
+        name: git
+        state: present
+
+    - name: Install CUPS for printer management
+      apt:
+        name: cups
+        state: present
+
+    - name: Clone application repository
+      git:
+        repo: https://github.com/Akachi-Anabanti/web_printer.git
+        dest: /home/vagrant/web_printer
+        version: main
+
+    - name: Build the backend
+      command: mvn clean install
+      args:
+        chdir: /home/vagrant/web_printer/printer-management
+
+    - name: Build the frontend
+      command: npm install && npm run build
+      args:
+        chdir: /home/vagrant/web_printer/printer-management-frontend
+
+    - name: Install Nginx
+      apt:
+        name: nginx
+        state: present
+
+    - name: Configure Nginx
+      copy:
+        dest: /etc/nginx/sites-available/myapp
+        content: |
+          server {
+              listen 80;
+              server_name localhost;
+
+              location / {
+                  root /home/vagrant/web_printer/printer-management-frontend/build;
+                  index index.html index.htm;
+                  try_files $uri $uri/ /index.html;
+              }
+
+              location /api {
+                  proxy_pass http://localhost:8080;  # Adjust this if needed
+                  proxy_set_header Host $host;
+                  proxy_set_header X-Real-IP $remote_addr;
+                  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                  proxy_set_header X-Forwarded-Proto $scheme;
+              }
+          }
+
+    - name: Enable Nginx configuration
+      command: ln -s /etc/nginx/sites-available/myapp /etc/nginx/sites-enabled/myapp
+      ignore_errors: yes
+
+    - name: Test and restart Nginx
+      command: nginx -t
+      register: nginx_test
+      failed_when: nginx_test.rc != 0
+
+    - name: Restart Nginx
+      systemd:
+        name: nginx
+        state: restarted
+
+    - name: Create startup script
+      copy:
+        dest: /home/vagrant/start_app.sh
+        content: |
+          #!/bin/bash
+          cd /home/vagrant/web_printer/printer-management
+          nohup mvn spring-boot:run > /dev/null 2>&1 &
+          cd /home/vagrant/web_printer/printer-management-frontend
+          nohup npm start > /dev/null 2>&1 &
+      mode: '0755'
