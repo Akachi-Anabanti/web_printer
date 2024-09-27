@@ -29,11 +29,12 @@ Vagrant.configure("2") do |config|
       # Install CUPS for printer management
       sudo apt-get install -y cups
   
-      # Clone your application repository (replace with your actual repo URL)
-      git clone https://github.com/yourusername/printer-management-app.git /home/vagrant/printer-management-app
-  
+      # Clone your application repository
+      # git clone https://github.com/Akachi-Anabanti/web_printer.git /home/vagrant/web_printer
+      git clone --depth 1 --single-branch --branch main https://github.com/Akachi-Anabanti/web_printer
+        
       # Use Ansible to setup the enivironment and application
-      cd /home/vagrant/printer-management-app/printer-management
+      cd /home/vagrant/web_printer
         ansible-playbook -i inventory SetupPlaybook.yml
     SHELL
   end
