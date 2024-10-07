@@ -1,13 +1,19 @@
 ---
 - name: Deploy Application on Local Machine
-  hosts: localhost  # Changed from 'local' to 'localhost'
-  become: yes  # Use sudo if necessary
+  hosts: localhost
+  become: yes
+  vars:
+    app_repo: "https://github.com/Akachi-Anabanti/web_printer.git"
+    app_dir: "{{ ansible_env.HOME }}/web_printer"
+    backend_dir: "{{ app_dir }}/printer-management"
+    frontend_dir: "{{ app_dir }}/printer-management-frontend"
+
   tasks:
     - name: Update and upgrade the system
       apt:
         update_cache: yes
         upgrade: dist
-      when: ansible_os_family == "Debian"  # Add conditional for Debian-based systems
+      when: ansible_os_family == "Debian"
 
     - name: Install required packages
       apt:
@@ -43,37 +49,37 @@
 
     - name: Clone application repository
       git:
-        repo: https://github.com/Akachi-Anabanti/web_printer.git
-        dest: /home/vagrant/web_printer
+        repo: "{{ app_repo }}"
+        dest: "{{ app_dir }}"
         version: main
-      become_user: vagrant
+      become_user: "{{ ansible_user_id }}"
 
     - name: Build the backend
       command: mvn clean install
       args:
-        chdir: /home/vagrant/web_printer/printer-management
-      become_user: vagrant
+        chdir: "{{ backend_dir }}"
+      become_user: "{{ ansible_user_id }}"
 
     - name: Build the frontend
       command: npm install && npm run build
       args:
-        chdir: /home/vagrant/web_printer/printer-management-frontend
-      become_user: vagrant
+        chdir: "{{ frontend_dir }}"
+      become_user: "{{ ansible_user_id }}"
 
- - name: Configure Nginx
-  copy:
-      dest: /etc/nginx/sites-available/myapp
-      content: |
+    - name: Configure Nginx
+      copy:
+        dest: /etc/nginx/sites-available/myapp
+        content: |
           server {
               listen 80;
               server_name localhost;
               location / {
-                  root /home/vagrant/web_printer/printer-management-frontend/build;
+                  root {{ frontend_dir }}/build;
                   index index.html index.htm;
                   try_files $uri $uri/ /index.html;
               }
               location /api {
-                  proxy_pass http://localhost:8080;  # Adjust this if needed
+                  proxy_pass http://localhost:8080;
                   proxy_set_header Host $host;
                   proxy_set_header X-Real-IP $remote_addr;
                   proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -89,16 +95,17 @@
         state: link
       notify: Restart Nginx
 
-  - name: Create startup script
+    - name: Create startup script
       copy:
-        dest: /home/vagrant/start_app.sh
+        dest: "{{ ansible_env.HOME }}/start_app.sh"
         content: |
           #!/bin/bash
-          cd /home/vagrant/web_printer/printer-management
+          cd {{ backend_dir }}
           nohup mvn spring-boot:run > /dev/null 2>&1 &
-          cd /home/vagrant/web_printer/printer-management-frontend
+          cd {{ frontend_dir }}
           nohup npm start > /dev/null 2>&1 &
-      mode: '0755'
+        mode: '0755'
+      become_user: "{{ ansible_user_id }}"
 
   handlers:
     - name: Restart Nginx
