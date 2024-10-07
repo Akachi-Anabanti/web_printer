@@ -17,9 +17,9 @@ sudo apt-get install -y cups
   
 # Clone your application repository
 
-git clone --depth 1 --single-branch --branch main https://github.com/Akachi-Anabanti/web_printer ~/web_printer
+git clone --depth 1 --single-branch --branch main https://github.com/Akachi-Anabanti/web_printer /tmp/web_printer
 
 # Use Ansible to setup the enivironment and application
-cd ~/web_printer
+cd /tmp/web_printer
 
 ansible-playbook -i inventory SetupPlaybook.yml
