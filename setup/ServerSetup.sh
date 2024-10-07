@@ -11,7 +11,6 @@ source ~/.bashrc
 
 # Install Git
 sudo apt-get install -y git
-git config --global http.postBuffer 524288000
 
 # Install CUPS for printer management
 sudo apt-get install -y cups
