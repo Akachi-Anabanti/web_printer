@@ -130,12 +130,14 @@
       get_url:
         url: "https://github.com/prometheus/prometheus/releases/download/v{{ prometheus_version }}/prometheus-{{ prometheus_version }}.linux-amd64.tar.gz"
         dest: /tmp/prometheus.tar.gz
+      become_user: "{{ ansible_user_id }}"
 
     - name: Extract Prometheus
       unarchive:
         src: /tmp/prometheus.tar.gz
         dest: /opt/
         remote_src: yes
+      become_user: "{{ ansible_user_id }}"
 
     - name: Configure Prometheus
       copy:
