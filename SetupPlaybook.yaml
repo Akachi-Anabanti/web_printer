@@ -51,14 +51,7 @@
         state: present
         update_cache: yes
       when: ansible_os_family == "Debian"
-
-    - name: Clone application repository
-      git:
-        repo: "{{ app_repo }}"
-        dest: "{{ app_dir }}"
-        version: main
-      become_user: "{{ ansible_user_id }}"
-
+      
     - name: Build the backend
       command: mvn clean install
       args:
