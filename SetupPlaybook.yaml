@@ -58,12 +58,18 @@
         chdir: "{{ backend_dir }}"
       become_user: "{{ ansible_user_id }}"
 
-    - name: Build the frontend
-      command: npm install && npm run build
+    - name: Install npm packages frontend
+      command: npm install
       args:
         chdir: "{{ frontend_dir }}"
       become_user: "{{ ansible_user_id }}"
-
+    
+    - name: Build the frontend
+      command: npm run build
+        args:
+          chdir: "{{ frontend_dir }}"
+        become_user: "{{ ansible_user_id }}"
+      
     - name: Configure Nginx
       copy:
         dest: /etc/nginx/sites-available/myapp
