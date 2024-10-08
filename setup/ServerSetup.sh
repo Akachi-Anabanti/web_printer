@@ -1,25 +1,34 @@
-sudo apt-get update
-sudo apt-get upgrade -y
+#!/usr/bin/env bash
 
-# Install python3-pip
-sudo apt install python3-pip -y
+# Install Python 3
+sudo apt install python3-full
 
-# Install python ansible
-pip install ansible
-export PATH="$HOME/.local/bin:$PATH"
+# Remove existing web_printer directory if it exists
+if [ -d "$HOME/web_printer" ]; then
+    rm -rf "$HOME/web_printer"
+fi
+
+# Clone the web_printer repository
+git clone --branch main https://www.github.com/Akachi-Anabanti/web_printer.git "$HOME/web_printer"
+
+# Install Poetry
+curl -sSL https://install.python-poetry.org | python3 -
+
+# Add Poetry to PATH
+echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
 source ~/.bashrc
 
-# Install Git
-sudo apt-get install -y git
+# Change to the web_printer directory
+cd "$HOME/web_printer"
 
-# Install CUPS for printer management
-sudo apt-get install -y cups
-  
-# Clone your application repository
+# Initialize Poetry project
+poetry init --no-interaction
 
-git clone --depth 1 --single-branch --branch main https://github.com/Akachi-Anabanti/web_printer /tmp/web_printer
+# Add Ansible to the project
+poetry add ansible
 
-# Use Ansible to setup the enivironment and application
-cd /tmp/web_printer
+# Run Ansible playbook
+poetry run ansible-playbook -i inventory SetupPlaybook.yaml --ask-become-pass
 
-ansible-playbook -i inventory SetupPlaybook.yml
+# Remove Poetry virtual environment
+poetry env remove --all
