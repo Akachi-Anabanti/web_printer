@@ -1,0 +1,32 @@
+- name: Build Application
+  hosts: localhost
+  become: yes
+  vars:
+    app_repo: "https://github.com/Akachi-Anabanti/web_printer.git"
+    app_dir: "{{ ansible_env.HOME }}/web_printer"
+    backend_dir: "{{ app_dir }}/printer-management"
+    frontend_dir: "{{ app_dir }}/printer-management-frontend"
+
+  tasks:
+    - name: Clone application repository
+      git:
+        repo: "{{ app_repo }}"
+        dest: "{{ app_dir }}"
+
+    - name: Build the backend
+      command: mvn clean install
+      args:
+        chdir: "{{ backend_dir }}"
+      become_user: "{{ ansible_user_id }}"
+
+    - name: Install npm packages frontend
+      command: npm install
+      args:
+        chdir: "{{ frontend_dir }}"
+      become_user: "{{ ansible_user_id }}"
+
+    - name: Build the frontend
+      command: npm run build
+      args:
+        chdir: "{{ frontend_dir }}"
+      become_user: "{{ ansible_user_id }}"
