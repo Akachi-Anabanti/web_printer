@@ -1,7 +1,6 @@
 - name: Configure Services
   hosts: localhost
   vars:
-    prometheus_version: "2.54.1"
     backend_dir: "{{ ansible_env.HOME }}/web_printer/printer-management"
     frontend_dir: "{{ ansible_env.HOME }}/web_printer/printer-management-frontend"
     release_path: "/var/www/web_printer/current"
