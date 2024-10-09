@@ -3,6 +3,8 @@ import org.springframework.boot.web.server.WebServerFactoryCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.util.StringUtils;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 @Configuration
 public class UnixSocketConfiguration {
@@ -12,7 +14,7 @@ public class UnixSocketConfiguration {
         return (factory) -> {
             factory.addConnectorCustomizers((connector) -> {
                 String projectRoot = System.getProperty("user.dir");
-                String socketPath = StringUtils.cleanPath(projectRoot + "/printerapp.sock");
+                Path socketPath = Paths.get(projectRoot + "/printerapp.sock").normalize();
                 connector.setProperty("address", "unix:" + socketPath);
             });
         };
