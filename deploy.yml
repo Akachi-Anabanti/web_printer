@@ -1,0 +1,83 @@
+- name: Deploy Application on Local Machine
+  hosts: localhost
+  become: yes
+  vars:
+    app_repo: "https://github.com/Akachi-Anabanti/web_printer.git"
+    app_dir: "{{ ansible_env.HOME }}/web_printer"
+    backend_dir: "{{ app_dir }}/printer-management"
+    frontend_dir: "{{ app_dir }}/printer-management-frontend"
+    versions_dir: "{{ frontend_dir }}/versions"
+    archive_name: "npm_build_{{ ansible_date_time.iso8601_basic }}.tgz"
+    archive_path: "{{ versions_dir }}/{{ archive_name }}"
+    releases_path: "/var/www/web_printer/releases/"  # Local releases directory
+    current_symlink: "/var/www/web_printer/current"  # Symbolic link path
+
+  tasks:
+    - name: Clone the application repository
+      git:
+        repo: "{{ app_repo }}"
+        dest: "{{ app_dir }}"
+        update: yes
+    
+    - name: Build the backend
+      command: mvn clean install
+      args:
+        chdir: "{{ backend_dir }}"
+      become_user: "{{ ansible_user_id }}"
+
+    - name: Install npm packages for frontend
+      command: npm install
+      args:
+        chdir: "{{ frontend_dir }}"
+      become_user: "{{ ansible_user_id }}"
+
+    - name: Build the frontend
+      command: npm run build
+      args:
+        chdir: "{{ frontend_dir }}"
+      become_user: "{{ ansible_user_id }}"
+
+    - name: Create versions directory
+      file:
+        path: "{{ versions_dir }}"
+        state: directory
+
+    - name: Pack the npm build
+      command: >
+        tar -cvzf {{ archive_path }} -C {{ frontend_dir }}/build .
+      register: pack_result
+      ignore_errors: yes
+
+    - name: Fail if packing failed
+      fail:
+        msg: "Failed to pack the npm build."
+      when: pack_result.rc != 0
+
+    - name: Create releases directory
+      file:
+        path: "{{ releases_path }}"
+        state: directory
+
+    - name: Move the package to the releases directory
+      command: mv {{ archive_path }} {{ releases_path }}
+      register: move_result
+
+    - name: Fail if moving failed
+      fail:
+        msg: "Failed to move the archive to the releases directory."
+      when: move_result.rc != 0
+
+    - name: Remove existing current symlink if it exists
+      file:
+        path: "{{ current_symlink }}"
+        state: absent
+
+    - name: Create a new symbolic link to the latest release
+      file:
+        src: "{{ releases_path }}/{{ archive_name }}"
+        dest: "{{ current_symlink }}"
+        state: link
+
+    - name: Log deployment result
+      debug:
+        msg: "Successfully deployed {{ archive_name }} to the releases directory and updated the symbolic link."
