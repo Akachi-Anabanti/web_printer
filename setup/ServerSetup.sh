@@ -5,7 +5,7 @@ sudo apt install python3-full
 
 # Remove existing web_printer directory if it exists
 if [ -d "$HOME/web_printer" ]; then
-    rm -rf "$HOME/web_printer"
+    sudo rm -rf "$HOME/web_printer"
 fi
 
 # Clone the web_printer repository
@@ -26,7 +26,7 @@ pip3 install ansible
 # Function to clean up the virtual environment
 cleanup() {
     deactivate
-    rm -rf printerapp_env
+    sudo rm -rf printerapp_env
     echo "Removed virtual environment."
 }
 
