@@ -68,12 +68,14 @@
       file:
         path: "{{ current_symlink }}"
         state: absent
+      become: yes
 
     - name: Create a new symbolic link to the latest release
       file:
         src: "{{ releases_path }}/{{ archive_name }}"
         dest: "{{ current_symlink }}"
         state: link
+      become: yes
 
     - name: Log deployment result
       debug:
