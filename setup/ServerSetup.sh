@@ -11,24 +11,23 @@ fi
 # Clone the web_printer repository
 git clone --branch main https://www.github.com/Akachi-Anabanti/web_printer.git "$HOME/web_printer"
 
-# Install Poetry
-curl -sSL https://install.python-poetry.org | python3 -
-
-# Add Poetry to PATH
-echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
-source ~/.bashrc
-
 # Change to the web_printer directory
 cd "$HOME/web_printer"
 
-# Initialize Poetry project
-poetry init --no-interaction
+# Create a virtual environment 
+python3 -m venv printerapp_env
+
+# Activate the virtual environment
+source printerapp_env/bin/activate
 
 # Add Ansible to the project
-poetry add ansible
+pip3 install ansible
 
 # Run Ansible playbook
-poetry run ansible-playbook -i inventory SetupPlaybook.yaml --ask-become-pass
+ansible-playbook -i inventory master.yml --ask-become-pass
 
-# Remove Poetry virtual environment
-poetry env remove --all
+# deactivate the virtual environment
+deactivate
+
+# Remove virtual environment
+sudo rm -rf printerapp_env
