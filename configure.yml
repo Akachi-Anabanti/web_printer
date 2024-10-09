@@ -35,7 +35,7 @@
       
     - name: Set Nginx permissions
       command: chown -R www-data:www-data {{ release_path }}
-      become_user: {{ ansible_user_id }}
+      become_user: "{{ ansible_user_id }}"
       
     - name: Enable Nginx configuration
       file:
