@@ -13,8 +13,10 @@ public class UnixSocketConfiguration {
         return (factory) -> {
             factory.addConnectorCustomizers((connector) -> {
                 String projectRoot = System.getProperty("user.dir");
-                Path socketPath = Paths.get(projectRoot + "/printerapp.sock").normalize();
+                Path socketPath = Paths.get(projectRoot, "printerapp.sock").toAbsolutePath().normalize();
                 connector.setProperty("address", "unix:" + socketPath);
+                connector.setProperty("port", "-1"); // Disable TCP port binding
+                connector.setProperty("unixDomainSocketPath", socketPath.toString());
             });
         };
     }
