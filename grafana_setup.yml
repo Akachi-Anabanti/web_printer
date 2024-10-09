@@ -18,12 +18,17 @@
         dest: /tmp/grafana-enterprise_11.2.2_amd64.deb
 
     - name: Install Grafana Enterprise
-      dpkg_selections:
-        name: grafana-enterprise
-        state: present
-      when: ansible_os_family == "Debian"
-
-    - name: Install the .deb package
       apt:
         deb: /tmp/grafana-enterprise_11.2.2_amd64.deb
       when: ansible_os_family == "Debian"
+
+    - name: Ensure Grafana service is started and enabled
+      systemd:
+        name: grafana-server
+        state: started
+        enabled: yes
+
+    - name: Clean up downloaded .deb file
+      file:
+        path: /tmp/grafana-enterprise_11.2.2_amd64.deb
+        state: absent
