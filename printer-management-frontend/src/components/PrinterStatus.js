@@ -8,7 +8,6 @@ const PrinterStatus = () => {
     const fetchStatus = async () => {
       try {
         const response = await getPrinterStatus();
-        console.log(response)
         setStatus(response);
       } catch (error) {
         setStatus(`Error: ${error}`);
