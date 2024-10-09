@@ -10,7 +10,9 @@ public class UnixSocketConfiguration {
     public WebServerFactoryCustomizer<TomcatServletWebServerFactory> tomcatSocketCustomizer() {
         return (factory) -> {
             factory.addConnectorCustomizers((connector) -> {
-                connector.setProperty("address", "unix:./printerapp.sock");
+                String projectRoot = System.getProperty("user.dir");
+                String socketPath = StringUtils.cleanPath(projectRoot + "/printerapp.sock");
+                connector.setProperty("address", "unix:" + socketPath);
             });
         };
     }
