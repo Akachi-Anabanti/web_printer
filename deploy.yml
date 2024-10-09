@@ -56,7 +56,7 @@
     - name: Move the package to the releases directory
       command: mv {{ archive_path }} {{ releases_path }}
       register: move_result
-      become_user: {{ ansible_user_id }}
+      become_user: "{{ ansible_user_id }}"
 
     - name: Fail if moving failed
       fail:
