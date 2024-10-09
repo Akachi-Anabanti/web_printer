@@ -34,7 +34,7 @@
       file:
         path: "{{ versions_dir }}"
         state: directory
-      become_user: "{{ ansible_user_id }}"
+      become: yes
 
     - name: Pack the npm build
       command: >
@@ -51,12 +51,12 @@
       file:
         path: "{{ releases_path }}"
         state: directory
-      become_user: "{{ ansible_user_id }}"
+      become: yes
       
     - name: Move the package to the releases directory
       command: mv {{ archive_path }} {{ releases_path }}
       register: move_result
-      become_user: "{{ ansible_user_id }}"
+      become: yes
 
     - name: Fail if moving failed
       fail:
