@@ -79,21 +79,17 @@
         state: started
       become: yes
 
-    - name: Install Loki
-      get_url:
-        url: "https://github.com/grafana/loki/releases/download/v{{ loki_version }}/loki-linux-amd64.zip"
-        dest: /tmp/loki.zip
-
-    - name: Extract Loki
-      unarchive:
-        src: /tmp/loki.zip
-        dest: /usr/local/bin/
-        remote_src: yes
-      become: yes
+    - name: Install loki and promtail packages
+      apt:
+        name:
+          - loki
+          - promtail
+        state: present
+      when: ansible_os_family == "Debian"
 
     - name: Create Loki config
       copy:
-        dest: /etc/loki/loki-config.yaml
+        dest: /etc/loki/loki.yaml
         content: |
           auth_enabled: false
           server:
@@ -142,7 +138,7 @@
 
           [Service]
           Type=simple
-          ExecStart=/usr/local/bin/loki -config.file /etc/loki/loki-config.yaml
+          ExecStart=/usr/local/bin/loki -config.file /etc/loki/loki.yaml
 
           [Install]
           WantedBy=multi-user.target
@@ -160,21 +156,9 @@
         state: started
       become: yes
 
-    - name: Install Promtail
-      get_url:
-        url: "https://github.com/grafana/loki/releases/download/v{{ promtail_version }}/promtail-linux-amd64.zip"
-        dest: /tmp/promtail.zip
-
-    - name: Extract Promtail
-      unarchive:
-        src: /tmp/promtail.zip
-        dest: /usr/local/bin/
-        remote_src: yes
-      become: yes
-
     - name: Create Promtail config
       copy:
-        dest: /etc/promtail/promtail-config.yaml
+        dest: /etc/loki/promtail.yaml
         content: |
           server:
             http_listen_port: 9080
@@ -200,7 +184,7 @@
                     - localhost
                   labels:
                     job: spring_boot
-                    __path__: /path/to/your/spring-boot/logs/*.log
+                    __path__: {{ backend_dir }}logs/*.log
       become: yes
 
     - name: Create systemd service for Promtail
@@ -213,7 +197,7 @@
 
           [Service]
           Type=simple
-          ExecStart=/usr/local/bin/promtail -config.file /etc/promtail/promtail-config.yaml
+          ExecStart=/usr/local/bin/promtail -config.file /etc/promtail/promtail.yaml
 
           [Install]
           WantedBy=multi-user.target
