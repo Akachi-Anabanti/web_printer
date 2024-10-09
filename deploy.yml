@@ -41,6 +41,7 @@
         tar -cvzf {{ archive_path }} -C {{ frontend_dir }}/build .
       register: pack_result
       ignore_errors: yes
+      become: yes
 
     - name: Fail if packing failed
       fail:
