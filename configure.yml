@@ -125,26 +125,26 @@
             retention_period: 0s
       become: yes
 
-    - name: Create systemd service for Loki
-      copy:
-        dest: /etc/systemd/system/loki.service
-        content: |
-          [Unit]
-          Description=Loki service
-          After=network.target
+    # - name: Create systemd service for Loki
+    #   copy:
+    #     dest: /etc/systemd/system/loki.service
+    #     content: |
+    #       [Unit]
+    #       Description=Loki service
+    #       After=network.target
 
-          [Service]
-          Type=simple
-          ExecStart=/usr/local/bin/loki -config.file /etc/loki/loki.yaml
+    #       [Service]
+    #       Type=simple
+    #       ExecStart=/usr/local/bin/loki -config.file /etc/loki/loki.yaml
 
-          [Install]
-          WantedBy=multi-user.target
-      become: yes
+    #       [Install]
+    #       WantedBy=multi-user.target
+    #   become: yes
       
-    - name: Reload systemd daemon
-      systemd:
-        daemon_reload: yes
-      become: yes
+    # - name: Reload systemd daemon
+    #   systemd:
+    #     daemon_reload: yes
+    #   become: yes
       
     - name: Enable and start Loki service
       systemd:
@@ -184,26 +184,26 @@
                     __path__: {{ backend_dir }}logs/*.log
       become: yes
 
-    - name: Create systemd service for Promtail
-      copy:
-        dest: /etc/systemd/system/promtail.service
-        content: |
-          [Unit]
-          Description=Promtail service
-          After=network.target
+    # - name: Create systemd service for Promtail
+    #   copy:
+    #     dest: /etc/systemd/system/promtail.service
+    #     content: |
+    #       [Unit]
+    #       Description=Promtail service
+    #       After=network.target
 
-          [Service]
-          Type=simple
-          ExecStart=/usr/local/bin/promtail -config.file /etc/promtail/promtail.yaml
+    #       [Service]
+    #       Type=simple
+    #       ExecStart=/usr/local/bin/promtail -config.file /etc/promtail/promtail.yaml
 
-          [Install]
-          WantedBy=multi-user.target
-      become: yes
+    #       [Install]
+    #       WantedBy=multi-user.target
+    #   become: yes
       
-    - name: Reload systemd daemon
-      systemd:
-        daemon_reload: yes
-      become: yes
+    # - name: Reload systemd daemon
+    #   systemd:
+    #     daemon_reload: yes
+    #   become: yes
       
     - name: Enable and start Promtail service
       systemd:
