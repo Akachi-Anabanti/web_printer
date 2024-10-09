@@ -1,0 +1,45 @@
+- name: Setup Environment
+  hosts: localhost
+  become: yes
+  tasks:
+    - name: Update and upgrade the system
+      apt:
+        update_cache: yes
+        upgrade: dist
+      when: ansible_os_family == "Debian"
+
+    - name: Install required packages
+      apt:
+        name:
+          - openjdk-21-jdk
+          - maven
+          - git
+          - cups
+          - cups-bsd
+          - nginx
+          - wget
+          - unzip
+          - software-properties-common
+          - grafana
+        state: present
+      when: ansible_os_family == "Debian"
+
+    - name: Add NodeSource repository
+      get_url:
+        url: https://deb.nodesource.com/setup_20.x
+        dest: /tmp/nodesource_setup.sh
+        mode: '0755'
+      when: ansible_os_family == "Debian"
+
+    - name: Run NodeSource setup script
+      command: /tmp/nodesource_setup.sh
+      args:
+        creates: /etc/apt/sources.list.d/nodesource.list
+      when: ansible_os_family == "Debian"
+
+    - name: Install Node.js
+      apt:
+        name: nodejs
+        state: present
+        update_cache: yes
+      when: ansible_os_family == "Debian"
