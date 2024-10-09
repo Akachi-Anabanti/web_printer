@@ -1,4 +1,7 @@
 - name: Install Prometheus and configure services
+  hosts: localhost
+  vars:
+    prometheus_version: "2.54.1"
   block:
     - name: Install Prometheus
       get_url:
@@ -51,6 +54,11 @@
       become: yes
       when: prometheus_download_success | default(false)
 
+    - name: Reload systemd daemon
+      systemd:
+        daemon_reload: yes
+      become: yes
+      
     - name: Enable and start Prometheus service
       systemd:
         name: prometheus
