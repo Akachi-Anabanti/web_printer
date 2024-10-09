@@ -46,37 +46,38 @@
         state: link
       notify: Restart Nginx
       become: yes
-- name: Create systemd service for Spring Boot application
-  copy:
-    dest: /etc/systemd/system/printerapp.service
-    content: |
-      [Unit]
-      Description=Printer sharing Spring Boot application
-      After=network.target
-      [Service]
-      User={{ ansible_user_id }}
-      WorkingDirectory={{ backend_dir }}
-      ExecStart=/usr/bin/mvn spring-boot:run
-      SuccessExitStatus=143
-      TimeoutStopSec=10
-      Restart=always
-      RestartSec=5
-      [Install]
-      WantedBy=multi-user.target
-  notify: Start Spring Boot Service
-  become: yes
-
-- name: Reload systemd daemon
-  systemd:
-    daemon_reload: yes
-  become: yes
-
-- name: Enable and start Spring Boot service
-  systemd:
-    name: printerapp
-    enabled: yes
-    state: started
-  become: yes
+      
+    - name: Create systemd service for Spring Boot application
+      copy:
+        dest: /etc/systemd/system/printerapp.service
+        content: |
+          [Unit]
+          Description=Printer sharing Spring Boot application
+          After=network.target
+          [Service]
+          User={{ ansible_user_id }}
+          WorkingDirectory={{ backend_dir }}
+          ExecStart=/usr/bin/mvn spring-boot:run
+          SuccessExitStatus=143
+          TimeoutStopSec=10
+          Restart=always
+          RestartSec=5
+          [Install]
+          WantedBy=multi-user.target
+      notify: Start Spring Boot Service
+      become: yes
+    
+    - name: Reload systemd daemon
+      systemd:
+        daemon_reload: yes
+      become: yes
+    
+    - name: Enable and start Spring Boot service
+      systemd:
+        name: printerapp
+        enabled: yes
+        state: started
+      become: yes
 
     - name: Install Prometheus
       get_url:
