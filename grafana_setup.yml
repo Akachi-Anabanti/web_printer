@@ -1,6 +1,6 @@
 ---
 - name: Install Grafana Enterprise
-  become: yes  # Use sudo to run commands as root
+  become: yes
   tasks:
     - name: Install required packages
       apt:
