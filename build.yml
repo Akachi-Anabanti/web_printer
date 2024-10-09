@@ -8,11 +8,6 @@
     frontend_dir: "{{ app_dir }}/printer-management-frontend"
 
   tasks:
-    - name: Clone application repository
-      git:
-        repo: "{{ app_repo }}"
-        dest: "{{ app_dir }}"
-
     - name: Build the backend
       command: mvn clean install
       args:
