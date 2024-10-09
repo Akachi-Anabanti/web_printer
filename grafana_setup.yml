@@ -1,6 +1,5 @@
 ---
 - name: Install Grafana Enterprise
-  become: yes
   tasks:
     - name: Install required packages
       apt:
