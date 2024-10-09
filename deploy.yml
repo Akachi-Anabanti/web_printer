@@ -11,13 +11,7 @@
     releases_path: "/var/www/web_printer/releases/"  # Local releases directory
     current_symlink: "/var/www/web_printer/current"  # Symbolic link path
 
-  tasks:
-    - name: Clone the application repository
-      git:
-        repo: "{{ app_repo }}"
-        dest: "{{ app_dir }}"
-        update: yes
-    
+  tasks: 
     - name: Build the backend
       command: mvn clean install
       args:
@@ -40,6 +34,7 @@
       file:
         path: "{{ versions_dir }}"
         state: directory
+      become_user: "{{ ansible_user_id }}"
 
     - name: Pack the npm build
       command: >
@@ -56,10 +51,12 @@
       file:
         path: "{{ releases_path }}"
         state: directory
-
+      become_user: "{{ ansible_user_id }}"
+      
     - name: Move the package to the releases directory
       command: mv {{ archive_path }} {{ releases_path }}
       register: move_result
+      become_user: {{ ansible_user_id }}
 
     - name: Fail if moving failed
       fail:
