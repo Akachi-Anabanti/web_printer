@@ -1,0 +1,265 @@
+- name: Configure Services
+  hosts: localhost
+  become: yes
+  vars:
+    prometheus_version: "2.37.0"
+    loki_version: "2.8.0"
+    promtail_version: "2.8.0"
+    backend_dir: "{{ ansible_env.HOME }}/web_printer/printer-management"
+    frontend_dir: "{{ ansible_env.HOME }}/web_printer/printer-management-frontend"
+    release_path: "/var/www/web_printer/current"
+
+  tasks:
+    - name: Configure Nginx
+      copy:
+        dest: /etc/nginx/sites-available/printerapp
+        content: |
+          server {
+              listen 80 default_server;
+              listen [::]:80 default_server;
+              server_name printerapp.local;
+              location / {
+                  alias {{ release_path }}/;
+                  index index.html index.htm;
+                  try_files $uri $uri/ /index.html;
+              }
+              location /api {
+                  proxy_pass http://unix:{{ backend_dir }}/printerapp.sock;
+                  proxy_set_header Host $host;
+                  proxy_set_header X-Real-IP $remote_addr;
+                  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                  proxy_set_header X-Forwarded-Proto $scheme;
+              }
+          }
+      notify: Restart Nginx
+      
+    - name: Set Nginx permissions
+      command: chown -R www-data:www-data {{ release_path }}
+      become_user: {{ ansible_user }}
+      
+    - name: Enable Nginx configuration
+      file:
+        src: /etc/nginx/sites-available/printerapp
+        dest: /etc/nginx/sites-enabled/printerapp
+        state: link
+      notify: Restart Nginx
+
+    - name: Create systemd service for Spring Boot application
+      copy:
+        dest: /etc/systemd/system/printerapp.service
+        content: |
+          [Unit]
+          Description=Printer sharing Spring Boot application
+          After=network.target
+
+          [Service]
+          User={{ ansible_user_id }}
+          WorkingDirectory={{ backend_dir }}
+          ExecStart=/usr/bin/mvn spring-boot:run
+          SuccessExitStatus=143
+          TimeoutStopSec=10
+          Restart=on-failure
+          RestartSec=5
+
+          [Install]
+          WantedBy=multi-user.target
+      notify: Start Spring Boot Service
+
+    - name: Enable and start Spring Boot service
+      systemd:
+        name: printerapp
+        enabled: yes
+        state: started
+
+    - name: Install Prometheus
+      get_url:
+        url: "https://github.com/prometheus/prometheus/releases/download/v{{ prometheus_version }}/prometheus-{{ prometheus_version }}.linux-amd64.tar.gz"
+        dest: /tmp/prometheus.tar.gz
+      become_user: "{{ ansible_user_id }}"
+
+    - name: Extract Prometheus
+      unarchive:
+        src: /tmp/prometheus.tar.gz
+        dest: /opt/
+        remote_src: yes
+      become_user: "{{ ansible_user_id }}"
+
+    - name: Configure Prometheus
+      copy:
+        dest: /etc/prometheus/prometheus.yml
+        content: |
+          global:
+            scrape_interval: 15s
+
+          scrape_configs:
+            - job_name: 'spring_boot_app'
+              metrics_path: '/actuator/prometheus'
+              static_configs:
+                - targets: ['localhost:8080']
+
+    - name: Create systemd service for Prometheus
+      copy:
+        dest: /etc/systemd/system/prometheus.service
+        content: |
+          [Unit]
+          Description=Prometheus
+          Wants=network-online.target
+          After=network-online.target
+
+          [Service]
+          User=prometheus
+          ExecStart=/opt/prometheus-{{ prometheus_version }}.linux-amd64/prometheus --config.file /etc/prometheus/prometheus.yml
+
+          [Install]
+          WantedBy=default.target
+
+    - name: Enable and start Prometheus service
+      systemd:
+        name: prometheus
+        enabled: yes
+        state: started
+
+    - name: Install Loki
+      get_url:
+        url: "https://github.com/grafana/loki/releases/download/v{{ loki_version }}/loki-linux-amd64.zip"
+        dest: /tmp/loki.zip
+
+    - name: Extract Loki
+      unarchive:
+        src: /tmp/loki.zip
+        dest: /usr/local/bin/
+        remote_src: yes
+
+    - name: Create Loki config
+      copy:
+        dest: /etc/loki/loki-config.yaml
+        content: |
+          auth_enabled: false
+          server:
+            http_listen_port: 3100
+          ingester:
+            lifecycler:
+              address: 127.0.0.1
+              ring:
+                kvstore:
+                  store: inmemory
+              final_sleep: 0s
+            chunk_idle_period: 5m
+            chunk_retain_period: 30s
+          schema_config:
+            configs:
+              - from: 2020-05-15
+                store: boltdb
+                object_store: filesystem
+                schema: v11
+                index:
+                  prefix: index_
+                  period: 168h
+          storage_config:
+            boltdb:
+              directory: /tmp/loki/index
+            filesystem:
+              directory: /tmp/loki/chunks
+          limits_config:
+            enforce_metric_name: false
+            reject_old_samples: true
+            reject_old_samples_max_age: 168h
+          chunk_store_config:
+            max_look_back_period: 0s
+          table_manager:
+            retention_deletes_enabled: false
+            retention_period: 0s
+
+    - name: Create systemd service for Loki
+      copy:
+        dest: /etc/systemd/system/loki.service
+        content: |
+          [Unit]
+          Description=Loki service
+          After=network.target
+
+          [Service]
+          Type=simple
+          ExecStart=/usr/local/bin/loki -config.file /etc/loki/loki-config.yaml
+
+          [Install]
+          WantedBy=multi-user.target
+
+    - name: Enable and start Loki service
+      systemd:
+        name: loki
+        enabled: yes
+        state: started
+
+    - name: Install Promtail
+      get_url:
+        url: "https://github.com/grafana/loki/releases/download/v{{ promtail_version }}/promtail-linux-amd64.zip"
+        dest: /tmp/promtail.zip
+
+    - name: Extract Promtail
+      unarchive:
+        src: /tmp/promtail.zip
+        dest: /usr/local/bin/
+        remote_src: yes
+
+    - name: Create Promtail config
+      copy:
+        dest: /etc/promtail/promtail-config.yaml
+        content: |
+          server:
+            http_listen_port: 9080
+            grpc_listen_port: 0
+
+          positions:
+            filename: /tmp/positions.yaml
+
+          clients:
+            - url: http://localhost:3100/loki/api/v1/push
+
+          scrape_configs:
+            - job_name: system
+              static_configs:
+                - targets:
+                    - localhost
+                  labels:
+                    job: varlogs
+                    __path__: /var/log/*log
+            - job_name: spring_boot
+              static_configs:
+                - targets:
+                    - localhost
+                  labels:
+                    job: spring_boot
+                    __path__: /path/to/your/spring-boot/logs/*.log
+
+    - name: Create systemd service for Promtail
+      copy:
+        dest: /etc/systemd/system/promtail.service
+        content: |
+          [Unit]
+          Description=Promtail service
+          After=network.target
+
+          [Service]
+          Type=simple
+          ExecStart=/usr/local/bin/promtail -config.file /etc/promtail/promtail-config.yaml
+
+          [Install]
+          WantedBy=multi-user.target
+
+    - name: Enable and start Promtail service
+      systemd:
+        name: promtail
+        enabled: yes
+        state: started
+
+  handlers:
+    - name: Restart Nginx
+      systemd:
+        name: nginx
+        state: restarted
+
+    - name: Start Spring Boot Service
+      systemd:
+        name: printerapp
+        state: started
