@@ -1,6 +1,7 @@
 ---
 - name: Install Grafana Enterprise
   hosts: localhost
+  become: yes
   tasks:
     - name: Install required packages
       apt:
