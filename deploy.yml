@@ -63,6 +63,12 @@
     #   fail:
     #     msg: "Failed to move the archive to the releases directory."
     #   when: move_result.rc != 0
+    
+    - name: Create unziped archive directory
+      file:
+        path: "{{ release_path }}/{{ unziped_archive_name }}"
+        state: directory
+      become: yes
       
     - name: Unzip the archive
       command: tar -xvzf {{ archive_path }} -C {{ releases_path }}/{{ unziped_archive_name }}
