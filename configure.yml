@@ -13,22 +13,27 @@
       copy:
         dest: /etc/nginx/sites-available/printerapp
         content: |
-          server {
-              listen 80 default_server;
-              listen [::]:80 default_server;
-              server_name printerapp.local;
-              location / {
-                  alias {{ release_path }}/;
-                  index index.html index.htm;
-                  try_files $uri $uri/ /index.html;
-              }
-              location /api {
-                  proxy_pass http://unix:{{ backend_dir }}/printerapp.sock;
-                  proxy_set_header Host $host;
-                  proxy_set_header X-Real-IP $remote_addr;
-                  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-                  proxy_set_header X-Forwarded-Proto $scheme;
-              }
+          http {
+              upstream spring_app {
+                        server unix:{{ backend_dir }}/printerapp.sock;
+            }
+            server {
+                listen 80 default_server;
+                listen [::]:80 default_server;
+                server_name printerapp.local;
+                location / {
+                    alias {{ release_path }}/;
+                    index index.html index.htm;
+                    try_files $uri $uri/ /index.html;
+                }
+                location /api {
+                    proxy_pass http://spring_app;
+                    proxy_set_header Host $host;
+                    proxy_set_header X-Real-IP $remote_addr;
+                    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                    proxy_set_header X-Forwarded-Proto $scheme;
+                }
+            }
           }
       notify: Restart Nginx
       become: yes
