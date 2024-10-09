@@ -1,6 +1,5 @@
 - name: Build Application
   hosts: localhost
-  become: yes
   vars:
     app_repo: "https://github.com/Akachi-Anabanti/web_printer.git"
     app_dir: "{{ ansible_env.HOME }}/web_printer"
