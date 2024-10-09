@@ -1,0 +1,4 @@
+- import_playbook: setup.yml
+- import_playbook: build.yml
+- import_playbook: configure.yml
+- import_playbook: deploy.yml
