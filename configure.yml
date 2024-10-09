@@ -35,7 +35,7 @@
       
     - name: Set Nginx permissions
       command: chown -R www-data:www-data {{ release_path }}
-      become_user: {{ ansible_user }}
+      become_user: {{ ansible_user_id }}
       
     - name: Enable Nginx configuration
       file:
@@ -56,9 +56,10 @@
           User={{ ansible_user_id }}
           WorkingDirectory={{ backend_dir }}
           ExecStart=/usr/bin/mvn spring-boot:run
+          ExecStopPost=/bin/rm -f {{ backend_dir }}/printerapp.sock
           SuccessExitStatus=143
           TimeoutStopSec=10
-          Restart=on-failure
+          Restart=always
           RestartSec=5
 
           [Install]
