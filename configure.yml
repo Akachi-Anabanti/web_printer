@@ -79,58 +79,6 @@
         state: started
       become: yes
 
-    - name: Install Prometheus
-      get_url:
-        url: "https://github.com/prometheus/prometheus/releases/download/v{{ prometheus_version }}/prometheus-{{ prometheus_version }}.linux-amd64.tar.gz"
-        dest: /tmp/prometheus.tar.gz
-      become_user: "{{ ansible_user_id }}"
-      become: yes
-
-    - name: Extract Prometheus
-      unarchive:
-        src: /tmp/prometheus.tar.gz
-        dest: /opt/
-        remote_src: yes
-      become: yes
-
-    - name: Configure Prometheus
-      copy:
-        dest: /etc/prometheus/prometheus.yml
-        content: |
-          global:
-            scrape_interval: 15s
-
-          scrape_configs:
-            - job_name: 'spring_boot_app'
-              metrics_path: '/actuator/prometheus'
-              static_configs:
-                - targets: ['localhost:8080']
-      become: yes
-
-    - name: Create systemd service for Prometheus
-      copy:
-        dest: /etc/systemd/system/prometheus.service
-        content: |
-          [Unit]
-          Description=Prometheus
-          Wants=network-online.target
-          After=network-online.target
-
-          [Service]
-          User=prometheus
-          ExecStart=/opt/prometheus-{{ prometheus_version }}.linux-amd64/prometheus --config.file /etc/prometheus/prometheus.yml
-
-          [Install]
-          WantedBy=default.target
-      become: yes
-
-    - name: Enable and start Prometheus service
-      systemd:
-        name: prometheus
-        enabled: yes
-        state: started
-      become: yes
-
     - name: Install Loki
       get_url:
         url: "https://github.com/grafana/loki/releases/download/v{{ loki_version }}/loki-linux-amd64.zip"
@@ -199,7 +147,12 @@
           [Install]
           WantedBy=multi-user.target
       become: yes
-
+      
+    - name: Reload systemd daemon
+      systemd:
+        daemon_reload: yes
+      become: yes
+      
     - name: Enable and start Loki service
       systemd:
         name: loki
@@ -265,7 +218,12 @@
           [Install]
           WantedBy=multi-user.target
       become: yes
-
+      
+    - name: Reload systemd daemon
+      systemd:
+        daemon_reload: yes
+      become: yes
+      
     - name: Enable and start Promtail service
       systemd:
         name: promtail
