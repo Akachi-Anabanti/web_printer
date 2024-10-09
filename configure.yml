@@ -80,7 +80,7 @@
       apt:
         name:
           - loki
-          - promtail
+          # - promtail
         state: present
       when: ansible_os_family == "Debian"
 
