@@ -1,0 +1,28 @@
+---
+- name: Install Grafana Enterprise
+  become: yes  # Use sudo to run commands as root
+  tasks:
+    - name: Install required packages
+      apt:
+        name:
+          - adduser
+          - libfontconfig1
+          - musl
+        state: present
+        update_cache: yes
+
+    - name: Download Grafana Enterprise
+      get_url:
+        url: https://dl.grafana.com/enterprise/release/grafana-enterprise_11.2.2_amd64.deb
+        dest: /tmp/grafana-enterprise_11.2.2_amd64.deb
+
+    - name: Install Grafana Enterprise
+      dpkg_selections:
+        name: grafana-enterprise
+        state: present
+      when: ansible_os_family == "Debian"
+
+    - name: Install the .deb package
+      apt:
+        deb: /tmp/grafana-enterprise_11.2.2_amd64.deb
+      when: ansible_os_family == "Debian"
