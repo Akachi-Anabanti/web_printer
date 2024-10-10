@@ -29,20 +29,28 @@
                   proxy_set_header X-Forwarded-Proto $scheme;
               }
           }
-      notify: Restart Nginx
+      notify: Reload systemd daemon
+      notify: Restart nginx
       become: yes
 
     - name: Set Nginx permissions
       command: chown -R www-data:www-data {{ release_path }}
       become: yes
 
+    - name: Remove default Nginx site
+      file:
+        path: /etc/nginx/sites-enabled/default
+        state: absent
+      notify: Reload Nginx
+
     - name: Enable Nginx configuration
       file:
         src: /etc/nginx/sites-available/printerapp
-        dest: /etc/nginx/sites-enabled/printerapp
+        dest: /etc/nginx/sites-enabled/
         state: link
       notify: Restart Nginx
       become: yes
+
       
     - name: Create systemd service for Spring Boot application
       copy:
@@ -61,13 +69,10 @@
           RestartSec=5
           [Install]
           WantedBy=multi-user.target
+      notify: Reload systemd daemon
       notify: Start Spring Boot Service
       become: yes
     
-    - name: Reload systemd daemon
-      systemd:
-        daemon_reload: yes
-      become: yes
     
     - name: Enable and start Spring Boot service
       systemd:
@@ -77,11 +82,21 @@
       become: yes
 
   handlers:
+      - name: Reload systemd daemon
+      systemd:
+        daemon_reload: yes
+      become: yes
+      
     - name: Restart Nginx
       systemd:
         name: nginx
         state: restarted
 
+    - name: Reload Nginx
+      service:
+        name: nginx
+        state: reloaded
+        
     - name: Start Spring Boot Service
       systemd:
         name: printerapp
