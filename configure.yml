@@ -29,7 +29,6 @@
                   proxy_set_header X-Forwarded-Proto $scheme;
               }
           }
-      notify: Reload systemd daemon
       notify: Restart nginx
       become: yes
 
