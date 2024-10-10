@@ -46,7 +46,7 @@
     - name: Enable Nginx configuration
       file:
         src: /etc/nginx/sites-available/printerapp
-        dest: /etc/nginx/sites-enabled/
+        dest: /etc/nginx/sites-enabled/printerapp
         state: link
       notify: Restart Nginx
       become: yes
