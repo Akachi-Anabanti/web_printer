@@ -89,7 +89,7 @@ sudo snap install gutenprint-printer-app
 4. Plug in the printer via USB.
    Execute `lsusb` and verify that the printer is among the devices.
 
-5. Open the CUPS web page at `localhost:631`.
+5. Open the CUPS web page at `localhost:631` or `server_ip:631`
    Go to the administrative page, add a new printer. You will be prompted for the username and password you created earlier.
    Select the printer and choose the driver from the list.
    Add printer and finish the process.
@@ -133,14 +133,6 @@ server {
 
     location /admin/monitoring/ {
         proxy_pass http://localhost:3000/;
-        proxy_set_header Host $http_host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-    }
-
-    location /admin/printer/ {
-        proxy_pass http://localhost:631/;
         proxy_set_header Host $http_host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
