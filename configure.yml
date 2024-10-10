@@ -35,10 +35,10 @@
                   proxy_pass http://localhost:3000;
               }
               location /admin/printer {
-                  proxy_pass http://locahost:631;
+                  proxy_pass http://localhost:631;
               }
           }
-      notify: Restart nginx
+      notify: Restart Nginx
       become: yes
 
     - name: Set Nginx permissions
