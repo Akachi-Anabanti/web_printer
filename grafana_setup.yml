@@ -2,36 +2,55 @@
 - name: Install Grafana Enterprise
   hosts: localhost
   become: yes
+  vars:
+    grafana_version: "11.2.2"
   tasks:
-    block:
-      - name: Install required packages
-        apt:
-          name:
-            - adduser
-            - libfontconfig1
-            - musl
-          state: present
-          update_cache: yes
-  
-      - name: Download Grafana Enterprise
-        get_url:
-          url: https://dl.grafana.com/enterprise/release/grafana-enterprise_11.2.2_amd64.deb
-          dest: /tmp/grafana-enterprise_11.2.2_amd64.deb
-  
-      - name: Install Grafana Enterprise
-        apt:
-          deb: /tmp/grafana-enterprise_11.2.2_amd64.deb
-        when: ansible_os_family == "Debian"
-  
-      - name: Ensure Grafana service is started and enabled
-        systemd:
-          name: grafana-server
-          state: started
-          enabled: yes
-    rescue:
-      
+    - name: Check if Grafana is already installed
+      command: dpkg-query -W grafana-enterprise
+      register: grafana_check
+      failed_when: false
+      changed_when: false
 
-    - name: Clean up downloaded .deb file
-      file:
-        path: /tmp/grafana-enterprise_11.2.2_amd64.deb
-        state: absent
+    - name: Install Grafana Enterprise if not present
+      block:
+        - name: Install required packages
+          apt:
+            name:
+              - adduser
+              - libfontconfig1
+              - musl
+            state: present
+            update_cache: yes
+
+        - name: Download Grafana Enterprise
+          get_url:
+            url: "https://dl.grafana.com/enterprise/release/grafana-enterprise_{{ grafana_version }}_amd64.deb"
+            dest: "/tmp/grafana-enterprise_{{ grafana_version }}_amd64.deb"
+          register: grafana_download
+
+        - name: Install Grafana Enterprise
+          apt:
+            deb: "/tmp/grafana-enterprise_{{ grafana_version }}_amd64.deb"
+          when: 
+            - ansible_os_family == "Debian"
+            - grafana_download is success
+
+        - name: Ensure Grafana service is started and enabled
+          systemd:
+            name: grafana-server
+            state: started
+            enabled: yes
+          when: grafana_download is success
+
+      rescue:
+        - name: Clean up downloaded .deb file
+          file:
+            path: "/tmp/grafana-enterprise_{{ grafana_version }}_amd64.deb"
+            state: absent
+
+      when: grafana_check.rc != 0
+
+    - name: Grafana is already installed
+      debug:
+        msg: "Grafana Enterprise is already installed. Skipping installation."
+      when: grafana_check.rc == 0
