@@ -41,6 +41,7 @@
         path: /etc/nginx/sites-enabled/default
         state: absent
       notify: Reload Nginx
+      become: yes
 
     - name: Enable Nginx configuration
       file:
