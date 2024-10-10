@@ -3,30 +3,33 @@
   hosts: localhost
   become: yes
   tasks:
-    - name: Install required packages
-      apt:
-        name:
-          - adduser
-          - libfontconfig1
-          - musl
-        state: present
-        update_cache: yes
-
-    - name: Download Grafana Enterprise
-      get_url:
-        url: https://dl.grafana.com/enterprise/release/grafana-enterprise_11.2.2_amd64.deb
-        dest: /tmp/grafana-enterprise_11.2.2_amd64.deb
-
-    - name: Install Grafana Enterprise
-      apt:
-        deb: /tmp/grafana-enterprise_11.2.2_amd64.deb
-      when: ansible_os_family == "Debian"
-
-    - name: Ensure Grafana service is started and enabled
-      systemd:
-        name: grafana-server
-        state: started
-        enabled: yes
+    block:
+      - name: Install required packages
+        apt:
+          name:
+            - adduser
+            - libfontconfig1
+            - musl
+          state: present
+          update_cache: yes
+  
+      - name: Download Grafana Enterprise
+        get_url:
+          url: https://dl.grafana.com/enterprise/release/grafana-enterprise_11.2.2_amd64.deb
+          dest: /tmp/grafana-enterprise_11.2.2_amd64.deb
+  
+      - name: Install Grafana Enterprise
+        apt:
+          deb: /tmp/grafana-enterprise_11.2.2_amd64.deb
+        when: ansible_os_family == "Debian"
+  
+      - name: Ensure Grafana service is started and enabled
+        systemd:
+          name: grafana-server
+          state: started
+          enabled: yes
+    rescue:
+      
 
     - name: Clean up downloaded .deb file
       file:
