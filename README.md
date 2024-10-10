@@ -71,9 +71,17 @@ Listen *:631
 ```
 
 2. Create a user, set password, and add user to cups group.
-   Note the details as this is the admin of CUPS.
+   ```bash
+   sudo usermod -aG lpadmin username
+   ```
+   ```bash
+   sudo passwd username
+   ```
+   Replace `username` with the actual username and set a password
+   
+   **Note The details as this is the admin of CUPS.**
 
-3. Install gutenprint:
+4. Install gutenprint:
 ```bash
 sudo snap install gutenprint-printer-app
 ```
