@@ -81,7 +81,7 @@
       become: yes
 
   handlers:
-      - name: Reload systemd daemon
+    - name: Reload systemd daemon
       systemd:
         daemon_reload: yes
       become: yes
