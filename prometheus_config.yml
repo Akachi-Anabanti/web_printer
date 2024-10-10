@@ -1,34 +1,45 @@
 ---
 - name: Prometheus Configuration
   hosts: localhost
+  become: yes
   vars:
     prometheus_version: "2.54.1"
+    prometheus_install_dir: "/opt/prometheus-{{ prometheus_version }}.linux-amd64"
+    prometheus_config_dir: "/etc/prometheus"
   tasks:
-    - name: Install Prometheus and configure services
+    - name: Check if Prometheus is already installed
+      stat:
+        path: "{{ prometheus_install_dir }}/prometheus"
+      register: prometheus_check
+
+    - name: Create necessary directories
+      file:
+        path: "{{ item }}"
+        state: directory
+        mode: '0755'
+      loop:
+        - "{{ prometheus_config_dir }}"
+        - "/var/lib/prometheus"
+
+    - name: Install and configure Prometheus
       block:
-        - name: Install Prometheus
+        - name: Download Prometheus
           get_url:
             url: "https://github.com/prometheus/prometheus/releases/download/v{{ prometheus_version }}/prometheus-{{ prometheus_version }}.linux-amd64.tar.gz"
             dest: /tmp/prometheus.tar.gz
-          become: yes
           register: prometheus_download
-
-        - name: Set flag for successful download
-          set_fact:
-            prometheus_download_success: true
-          when: prometheus_download is success
+          when: not prometheus_check.stat.exists
 
         - name: Extract Prometheus
           unarchive:
             src: /tmp/prometheus.tar.gz
             dest: /opt/
             remote_src: yes
-          become: yes
-          when: prometheus_download_success | default(false)
+          when: not prometheus_check.stat.exists
 
         - name: Configure Prometheus
           copy:
-            dest: /etc/prometheus/prometheus.yml
+            dest: "{{ prometheus_config_dir }}/prometheus.yml"
             content: |
               global:
                 scrape_interval: 15s
@@ -37,8 +48,6 @@
                   metrics_path: '/actuator/prometheus'
                   static_configs:
                     - targets: ['localhost:8080']
-          become: yes
-          when: prometheus_download_success | default(false)
 
         - name: Create systemd service for Prometheus
           copy:
@@ -48,32 +57,44 @@
               Description=Prometheus
               Wants=network-online.target
               After=network-online.target
+              
               [Service]
               User=prometheus
-              ExecStart=/opt/prometheus-{{ prometheus_version }}.linux-amd64/prometheus --config.file /etc/prometheus/prometheus.yml
+              ExecStart={{ prometheus_install_dir }}/prometheus --config.file {{ prometheus_config_dir }}/prometheus.yml --storage.tsdb.path /var/lib/prometheus
+              
               [Install]
               WantedBy=default.target
-          become: yes
-          when: prometheus_download_success | default(false)
+
+        - name: Ensure prometheus user exists
+          user:
+            name: prometheus
+            system: yes
+            shell: /sbin/nologin
+
+        - name: Set ownership for Prometheus directories
+          file:
+            path: "{{ item }}"
+            owner: prometheus
+            group: prometheus
+            recurse: yes
+          loop:
+            - "{{ prometheus_install_dir }}"
+            - "{{ prometheus_config_dir }}"
+            - "/var/lib/prometheus"
 
         - name: Reload systemd daemon
           systemd:
             daemon_reload: yes
-          become: yes
 
         - name: Enable and start Prometheus service
           systemd:
             name: prometheus
             enabled: yes
             state: started
-          become: yes
-          when: prometheus_download_success | default(false)
 
-      rescue:
-        - name: Set flag for failed download
-          set_fact:
-            prometheus_download_success: false
+      when: not prometheus_check.stat.exists
 
-        - name: Display error message
-          debug:
-            msg: "Prometheus download failed. Skipping Prometheus installation and configuration."
+    - name: Display message if Prometheus is already installed
+      debug:
+        msg: "Prometheus {{ prometheus_version }} is already installed. Skipping installation."
+      when: prometheus_check.stat.exists
