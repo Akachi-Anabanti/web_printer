@@ -7,12 +7,14 @@ public class PrintJob {
     private byte[] fileContent;
     private LocalDateTime submissionTime;
     private String status;
+    private PrintSettings printSettings;
 
-    public PrintJob(String fileName, byte[] fileContent) {
+    public PrintJob(String fileName, byte[] fileContent, PrintSettings printSettings) {
         this.fileName = fileName;
         this.fileContent = fileContent;
         this.submissionTime = LocalDateTime.now();
         this.status = "QUEUED";
+        this.printSettings = printSettings;
     }
 
     // Getters and setters
@@ -24,4 +26,11 @@ public class PrintJob {
     public void setSubmissionTime(LocalDateTime submissionTime) { this.submissionTime = submissionTime; }
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
+
+    public PrintSettings getPrintSettings() {
+        return printSettings;
+    }
+    public void setPrintSettings(PrintSettings printSettings) {
+        this.printSettings = printSettings;
+    }
 }
