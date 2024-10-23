@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { getPrinterStatus } from '../services/api';
+import React, { useState, useEffect } from "react";
+import { getPrinterStatus } from "../services/api";
 
 const PrinterStatus = () => {
-  const [status, setStatus] = useState('');
+  const [status, setStatus] = useState("");
 
   useEffect(() => {
     const fetchStatus = async () => {
@@ -10,7 +10,9 @@ const PrinterStatus = () => {
         const response = await getPrinterStatus();
         setStatus(response);
       } catch (error) {
-        setStatus(`Error: ${error}`);
+        setStatus(
+          `Error: ${"Server is not up yet, please wait \n or contact administrator"}`
+        );
       }
     };
 
