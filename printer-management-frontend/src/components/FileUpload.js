@@ -9,7 +9,7 @@ const FileUpload = () => {
     orientation: "portrait",
     paperSize: "a4",
     scale: 100,
-    margin: "normal",
+    margins: "normal",
     backgroundGraphics: false,
     pageRange: "",
   });
