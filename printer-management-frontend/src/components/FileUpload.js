@@ -7,7 +7,7 @@ const FileUpload = () => {
   const [message, setMessage] = useState("");
   const [printSettings, setPrintSettings] = useState({
     orientation: "portrait",
-    pageSize: "a4",
+    paperSize: "a4",
     scale: 100,
     margin: "normal",
     backgroundGraphics: false,
