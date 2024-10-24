@@ -1,6 +1,8 @@
 package com.example.printer_management.services;
 
 import com.example.printer_management.models.PrintJob;
+import com.example.printer_management.services.DocumentConverter;
+
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -57,8 +59,13 @@ public class PrinterService {
         }
 
         DocFlavor flavor = DocFlavor.INPUT_STREAM.AUTOSENSE;
+        
         PrintRequestAttributeSet attrSet = new HashPrintRequestAttributeSet();
-        attrSet.add(new Copies(1));
+        byte[] fileContent = new DocumentConverter().convertToPDF(printJob.getFileContent(), printJob.getFileName());
+        Doc doc = new SimpleDoc(new ByteArrayInputStream(fileContent), flavor, null);
+        DocPrintJob job = g2010Service.createPrintJob();
+        job.print(doc, attrSet);
+
 
         Doc doc = new SimpleDoc(new ByteArrayInputStream(printJob.getFileContent()), flavor, null);
         DocPrintJob job = g2010Service.createPrintJob();
