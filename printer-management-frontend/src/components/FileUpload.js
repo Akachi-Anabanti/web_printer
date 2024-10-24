@@ -30,7 +30,7 @@ const FileUpload = () => {
       return;
     }
     try {
-      const response = await uploadFile(file);
+      const response = await uploadFile(file, printSettings);
 
       setMessage(response);
     } catch (error) {
