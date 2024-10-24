@@ -25,7 +25,7 @@ public class PrintController {
         @RequestParam("scale") int scale,
         @RequestParam("margins") String margins,
         @RequestParam("backgroundGraphics") boolean backgroundGraphics,
-        @RequestParam("pageRange") <Optional>String pageRange) {
+        @RequestParam("pageRange") Optional<String> pageRange) {
         try {
             PrintSettings printSettings = new PrintSettings(orientation, paperSize, scale, margins, backgroundGraphics, pageRange);
             PrintJob printJob = new PrintJob(file.getOriginalFilename(), file.getBytes(), printSettings);
