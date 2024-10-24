@@ -1,0 +1,110 @@
+- name: Update and Deploy Application on Local Machine
+  hosts: localhost
+  vars:
+    app_dir: "{{ ansible_env.HOME }}/web_printer"
+    backend_dir: "{{ app_dir }}/printer-management"
+    frontend_dir: "{{ app_dir }}/printer-management-frontend"
+    versions_dir: "{{ frontend_dir }}/versions"
+    archive_name: "npm_build_{{ ansible_date_time.iso8601_basic }}.tgz"
+    unziped_archive_name: "{{ archive_name | regex_replace('\\.tgz$', '') }}"
+    archive_path: "{{ versions_dir }}/{{ archive_name }}"
+    releases_path: "/var/www/web_printer/releases"
+    current_symlink: "/var/www/web_printer/current"
+
+  tasks:
+    - name: Check if repository exists
+      stat:
+        path: "{{ app_dir }}"
+      register: repo_check
+
+    - name: Fail if repository doesn't exist
+      fail:
+        msg: "Repository does not exist at {{ app_dir }}. Please ensure the repository is already cloned."
+      when: not repo_check.stat.exists
+
+    - name: Pull latest changes for backend
+      command: git pull
+      args:
+        chdir: "{{ backend_dir }}"
+      become_user: "{{ ansible_user_id }}"
+
+    - name: Pull latest changes for frontend
+      command: git pull
+      args:
+        chdir: "{{ frontend_dir }}"
+      become_user: "{{ ansible_user_id }}"
+
+    - name: Build the backend
+      command: mvn clean install
+      args:
+        chdir: "{{ backend_dir }}"
+      become_user: "{{ ansible_user_id }}"
+      
+    - name: Install npm packages for frontend
+      command: npm install
+      args:
+        chdir: "{{ frontend_dir }}"
+      become_user: "{{ ansible_user_id }}"
+      
+    - name: Build the frontend
+      command: npm run build
+      args:
+        chdir: "{{ frontend_dir }}"
+      become_user: "{{ ansible_user_id }}"
+      
+    - name: Create versions directory if it doesn't exist
+      file:
+        path: "{{ versions_dir }}"
+        state: directory
+      become: yes
+      
+    - name: Pack the npm build
+      command: >
+        tar -cvzf {{ archive_path }} -C {{ frontend_dir }}/build .
+      register: pack_result
+      ignore_errors: yes
+      become: yes
+      
+    - name: Fail if packing failed
+      fail:
+        msg: "Failed to pack the npm build."
+      when: pack_result.rc != 0
+      
+    - name: Create releases directory if it doesn't exist
+      file:
+        path: "{{ releases_path }}"
+        state: directory
+      become: yes
+      
+    - name: Create unziped archive directory
+      file:
+        path: "{{ releases_path }}/{{ unziped_archive_name }}"
+        state: directory
+      become: yes
+      
+    - name: Unzip the archive
+      command: tar -xvzf {{ archive_path }} -C {{ releases_path }}/{{ unziped_archive_name }}
+      register: unzip_result
+      become: yes
+      
+    - name: Fail if unzipping failed
+      fail:
+        msg: "Failed to unzip the archive."
+      when: unzip_result.rc != 0
+      
+    - name: Remove existing current symlink if it exists
+      file:
+        path: "{{ current_symlink }}"
+        state: absent
+      become: yes
+      
+    - name: Create a new symbolic link to the latest release
+      file:
+        src: "{{ releases_path }}/{{ unziped_archive_name }}"
+        dest: "{{ current_symlink }}"
+        state: link
+      become: yes
+      
+    - name: Log deployment result
+      debug:
+        msg: "Successfully updated and deployed {{ archive_name }} to the releases directory, unzipped it, and updated the symbolic link."
