@@ -2,7 +2,8 @@ package com.example.printer_management.services;
 
 import com.example.printer_management.models.PrintJob;
 import com.example.printer_management.models.PrintSettings;
-
+import org.apache.poi.ss.usermodel.WorkbookFactory;
+import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -10,9 +11,8 @@ import javax.print.*;
 import javax.print.attribute.HashPrintRequestAttributeSet;
 import javax.print.attribute.PrintRequestAttributeSet;
 import javax.print.attribute.standard.*;
-
-// import javax.print.attribute.standard.Copies;
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 @Service
@@ -29,7 +29,6 @@ public class PrinterService {
         if (isPrinting || printQueue.isEmpty()) {
             return;
         }
-
         PrintJob job = printQueue.poll();
         if (job != null) {
             try {
@@ -48,26 +47,23 @@ public class PrinterService {
     private void print(PrintJob printJob) throws Exception {
         PrintService[] services = PrintServiceLookup.lookupPrintServices(null, null);
         PrintService g2010Service = null;
-
         for (PrintService service : services) {
             if (service.getName().toLowerCase().contains("g2010")) {
                 g2010Service = service;
                 break;
             }
         }
-
         if (g2010Service == null) {
             throw new Exception("G2010 series printer not found");
         }
 
         DocFlavor flavor = DocFlavor.INPUT_STREAM.AUTOSENSE;
         PrintRequestAttributeSet attrSet = new HashPrintRequestAttributeSet();
-
         applyPrintSettings(attrSet, printJob.getPrintSettings());
 
-        Doc doc = new SimpleDoc(new ByteArrayInputStream(printJob.getFileContent()), flavor, null);
+        byte[] fileContent = convertToPDF(printJob.getFileContent(), printJob.getFileName());
+        Doc doc = new SimpleDoc(new ByteArrayInputStream(fileContent), flavor, null);
         DocPrintJob job = g2010Service.createPrintJob();
-        
         job.print(doc, attrSet);
     }
 
@@ -77,7 +73,6 @@ public class PrinterService {
         } else {
             attrSet.add(OrientationRequested.PORTRAIT);
         }
-
         switch (settings.getPaperSize().toLowerCase()) {
             case "a4":
                 attrSet.add(MediaSizeName.ISO_A4);
@@ -89,8 +84,6 @@ public class PrinterService {
                 attrSet.add(MediaSizeName.NA_LEGAL);
                 break;
         }
-        // attrSet.add(new PrintQuality(settings.getScale()));
-
         switch (settings.getMargins().toLowerCase()) {
             case "normal":
                 attrSet.add(new MediaPrintableArea(0.25f, 0.25f, 8f, 10.5f, MediaPrintableArea.INCH));
@@ -102,10 +95,23 @@ public class PrinterService {
                 attrSet.add(new MediaPrintableArea(0.5f, 0.5f, 7.8f, 10f, MediaPrintableArea.INCH));
                 break;
         }
-
         if (settings.getPageRange() != null && !settings.getPageRange().isEmpty()) {
             attrSet.add(new PageRanges(settings.getPageRange()));
         }
+    }
+
+    private byte[] convertToPDF(byte[] fileContent, String fileName) throws IOException {
+        // This method will convert DOCX and XLSX files to PDF
+        if (fileName.endsWith(".docx")) {
+            try (XWPFDocument doc = new XWPFDocument(new ByteArrayInputStream(fileContent))) {
+                // Conversion logic here
+            }
+        } else if (fileName.endsWith(".xlsx")) {
+            try (org.apache.poi.ss.usermodel.Workbook wb = WorkbookFactory.create(new ByteArrayInputStream(fileContent))) {
+                // Conversion logic here
+            }
+        }
+        return fileContent; // Placeholder return for now
     }
 
     public boolean isCurrentlyPrinting() {
