@@ -48,6 +48,11 @@
 			<groupId>io.micrometer</groupId>
 			<artifactId>micrometer-registry-prometheus</artifactId>
 		</dependency>
+		<dependency>
+		    <groupId>org.apache.tomcat</groupId>
+		    <artifactId>tomcat</artifactId>
+		    <version>11.0.0</version>
+		</dependency>
 	</dependencies>
 
 	<build>
