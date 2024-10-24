@@ -11,7 +11,7 @@
         dest: /etc/nginx/sites-available/printerapp
         content: |
           upstream spring_app {
-                      server localhost:8080;
+                      server unix:{{ backend_dir }}/printerapp.sock;
                   }
           server {
               listen 80 default_server;
@@ -69,6 +69,14 @@
           TimeoutStopSec=10
           Restart=always
           RestartSec=5
+          Environment=SPRING_PROFILES_ACTIVE=prod
+          Environment=SERVER_PORT=0
+          
+          AmbientCapabilities=CAP_NET_BIND_SERVICE
+          # Ensure socket file is cleaned up on service stop
+          ExecStartPre=/bin/rm -f {{ backend_dir }}/printerapp.sock
+          ExecStopPost=/bin/rm -f {{ backend_dir}}/printerapp.sock
+          
           [Install]
           WantedBy=multi-user.target
       notify: Reload systemd daemon
