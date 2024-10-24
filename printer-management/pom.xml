@@ -49,11 +49,10 @@
 			<artifactId>micrometer-registry-prometheus</artifactId>
 		</dependency>
 		<dependency>
-		    <groupId>org.apache.tomcat</groupId>
-		    <artifactId>tomcat</artifactId>
-		    <version>11.0.0</version>
+		    <groupId>org.springframework</groupId>
+		    <artifactId>spring-instrument-tomcat</artifactId>
+		    <version>4.3.30.RELEASE</version>
 		</dependency>
-	</dependencies>
 
 	<build>
 		<plugins>
