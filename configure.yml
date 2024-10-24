@@ -11,7 +11,7 @@
         dest: /etc/nginx/sites-available/printerapp
         content: |
           upstream spring_app {
-                      server unix:{{ backend_dir }}/printerapp.sock;
+                      server localhost:8080;
                   }
           server {
               listen 80 default_server;
