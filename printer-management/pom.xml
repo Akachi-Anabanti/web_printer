@@ -53,6 +53,7 @@
 		    <artifactId>spring-instrument-tomcat</artifactId>
 		    <version>4.3.30.RELEASE</version>
 		</dependency>
+	</dependencies>
 
 	<build>
 		<plugins>
