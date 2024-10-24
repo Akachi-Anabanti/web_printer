@@ -28,7 +28,7 @@ public class PrintController {
         @RequestParam("backgroundGraphics") boolean backgroundGraphics,
         @RequestParam("pageRange") Optional<String> pageRange) {
         try {
-            PrintSettings printSettings = new PrintSettings(orientation, paperSize, scale, margins, backgroundGraphics, pageRange);
+            PrintSettings printSettings = new PrintSettings(orientation, paperSize, scale, margins, backgroundGraphics, pageRange.orElse("1-"));
             PrintJob printJob = new PrintJob(file.getOriginalFilename(), file.getBytes(), printSettings);
             printerService.queuePrintJob(printJob);
 
